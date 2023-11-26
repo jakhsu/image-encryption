@@ -37,14 +37,15 @@ function deletePreviousFiles(directory) {
 }
 
 function hasDuplicateKeys(existingKeys, newKeys) {
-    const uniqueKeys = new Set([...existingKeys, ...newKeys])
+    const newKeysAsNumbers = newKeys.map((e) => parseInt(e, 10))
+    const uniqueKeys = new Set([...existingKeys, ...newKeysAsNumbers])
     return newKeys.length + existingKeys.length !== uniqueKeys.size
 }
 
 // 定義處理具有檔案上傳的表單提交的路由
 app.post('/encrypt/color', upload.array('images', 1), (req, res) => {
     try {
-        const keys = req.body.keys.map((key) => key.value)
+        const keys = req.body.keys.map((key) => parseInt(key.value, 10))
         const images = req.body.images.map((image) => image.data)
         const imageName = req.body.name
         const keysFilePath = path.join(__dirname, 'keys', `${imageName}.txt`)
@@ -136,6 +137,7 @@ app.post('/decrypt/color', upload.array('images', 3), (req, res) => {
         deletePreviousFiles(selectedImgDir)
 
         images.forEach((image, index) => {
+            console.log(image)
             const base64Data = image.replace(/^data:image\/\w+;base64,/, '')
             const buffer = Buffer.from(base64Data, 'base64')
             fs.writeFileSync(
@@ -172,6 +174,26 @@ app.post('/decrypt/color', upload.array('images', 3), (req, res) => {
         res.status(500).send('內部伺服器錯誤')
     }
 })
+
+// Add this route handler to delete all files in the "keys" folder
+app.delete('/delete/keys', (req, res) => {
+    console.log('Delete all files in the "keys" folder')
+    try {
+        const keysFolderPaths = path.join(__dirname, 'keys')
+        console.log(keysFolderPath)
+
+        // Delete all files in the "keys" folder
+        deletePreviousFiles(keysFolderPath)
+
+        res.status(200).json({
+            message: '所有分享份已經刪除',
+        })
+    } catch (error) {
+        console.error('Error:', error)
+        res.status(500).send('Internal Server Error')
+    }
+})
+
 const port = 3000
 app.listen(port, () => {
     console.log(`伺服器正在運行，網址：http://localhost:${port}`)
