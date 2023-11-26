@@ -86,7 +86,7 @@ const handleSubmit = async () => {
         const requestBody = {
             images: images.map((image, index) => ({
                 name: `image${index + 1}`,
-                data: image,
+                data: image.image,
             })),
             keys: keys.map((key, index) => ({
                 name: `key${index + 1}`,
@@ -116,7 +116,6 @@ const handleSubmit = async () => {
                 return response.json() // Parse the response as JSON
             })
             .then((data) => {
-                console.log(data)
                 const processedImages = data.result.map((image) => ({
                     user: image.name,
                     image: `data:image/png;base64,${image.data}`,
