@@ -7,6 +7,7 @@ import NumberInput from './components/ui/NumberInput.vue'
 import Button from './components/ui/Button.vue'
 import { useGlobalStore } from './store/globalStore.js'
 import ProcessedImages from './components/ProcessedImages.vue'
+import Dropdown from './components/Dropdown.vue'
 const showImageUpload = ref(false)
 const showKeysInputs = ref(false)
 const showSubmit = ref(false)
@@ -63,9 +64,11 @@ const handleSubmit = async () => {
             .then(async (response) => {
                 console.log(response)
                 if (!response.ok) {
-                    const errorData = await response.json()
-                    console.error('Error details:', errorData)
-                    throw new Error('解密失敗: 伺服器錯誤')
+                    if (response.status === 400) {
+                        alert(`加密失敗: 重複金鑰`)
+                    } else {
+                        alert('加密失敗: 伺服器錯誤')
+                    }
                 }
                 return response.json()
             })
@@ -104,13 +107,9 @@ const handleSubmit = async () => {
             .then((response) => {
                 if (!response.ok) {
                     if (response.status === 400) {
-                        return response.json().then((errorData) => {
-                            alert(`解密失敗: ${errorData.error}`)
-                            throw new Error(`解密失敗: ${errorData.error}`)
-                        })
+                        alert(`解密失敗: 重複金鑰`)
                     } else {
                         alert('解密失敗: 伺服器錯誤')
-                        throw new Error('解密失敗: 伺服器錯誤')
                     }
                 }
                 return response.json() // Parse the response as JSON
@@ -127,10 +126,39 @@ const handleSubmit = async () => {
             })
     }
 }
+
+const handleDeleteAllKeys = async () => {
+    try {
+        const response = await fetch('http://localhost:3000/delete/keys', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                // Add any additional headers if needed
+            },
+        })
+
+        if (response.ok) {
+            const data = await response.json()
+            alert(data.message)
+        } else {
+            // Handle errors if the request was not successful
+            console.error(`Error: ${response.status} - ${response.statusText}`)
+            alert(
+                'Failed to delete keys. Please check the console for details.'
+            )
+        }
+    } catch (error) {
+        console.error('Error:', error)
+        alert('An error occurred while deleting keys.')
+    }
+}
 </script>
 <template>
     <div class="flex flex-col space-y-4 text-center">
         <h1 class="text-3xl">圖像加密和解密</h1>
+        <div class="fixed right-0 top-0">
+            <Dropdown @deleteAllKeys="handleDeleteAllKeys" />
+        </div>
         <PrepareList @done="startProcess" />
         <ImageUpload
             v-if="showImageUpload"
